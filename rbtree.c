@@ -160,6 +160,166 @@ void insert(rbtree *t,node *n)
     n->color = 1;
     insert_fixup(t,n);
 }
+node* minimum(rbtree *t, node *x){
+    while(x->left != t->NIL)
+        x = x->left;
+    return x;
+}
+// u에 v를 이식 
+void transplant(rbtree *t, node *u, node *v)
+{
+    if(u->parent == t->NIL) // u is root
+        t->root = v;
+    else if(u == u->parent->left) // u is left child
+        u->parent->left = v;
+    else // u is right child
+        u->parent->right = v;
+    v->parent = u->parent;
+}
+void delete_fixup(rbtree *t, node *x)
+{
+    while (x!= t->root && x->color == 0)
+    {
+        if(x == x->parent->left)
+        {
+            node *w = x->parent->right;
+            if(w->color == 1) // case 1
+            {
+                w->color = 0;
+                x->parent->color = 1;
+                left_rotation(t,x->parent);
+                w = x->parent->right;
+            }
+            if(w->left->color == 0 && w->right->color == 0)//case 2
+            {
+                w->color = 1;
+                x = x->parent;
+            }else //case 3 or 4
+            {
+                if(w->right->color == 0) //case 3 
+                {
+                    w->left->color = 0;
+                    w->color = 1;
+                    right_rotation(t,w);
+                    w = x->parent->right;
+                }//case 4
+                w->color = x->parent->color;
+                x->parent->color = 0;
+                w->right->color = 0;
+                left_rotation(t,x->parent);
+                x= t->root;
+            }
+        }else{
+            node *w = x->parent->left;
+            if(w->color ==1) //case 1 
+            {
+                w->color = 0;
+                x->parent->color = 1;
+                right_rotation(t,x->parent);
+                w = x->parent->left;
+            }
+            if(w->right->color == 0 && w->right->color == 0 ) //case 2 
+            {
+                w->color = 1;
+                x= x->parent;
+            }else //case 3 or 4
+            {
+                if(w->left->color == 0) //case 3
+                {
+                    w->right->color = 0;
+                    w->color = 1;
+                    left_rotation(t,w);
+                    w = w->parent->left;
+                }//case 4
+                w->color = x->parent->color;
+                x->parent->color = 0;
+                x->left->color = 0;
+                right_rotation(t,x->parent);
+                x = t->root;
+            }
+        }
+    }
+    x->color = 0;
+}
+void delete(rbtree *t, node *z)
+{
+    node *y = z;
+    node *x = z;
+    int y_origin_color = y->color;
+    
+    if(z->left == t->NIL) // no children or only right
+    {
+        x = z->right;
+        transplant(t,z,z->right);
+    }else if (z->right == t->NIL) // only left
+    {
+        x = z->left;
+        transplant(t,z,z->left);
+    }else { //both children
+        y = minimum(t,z->right);
+        y_origin_color = y->color;
+        x = y->right;
+        if (y->parent == z) // y가 z의 자식
+        {
+            x->parent = y;
+        }else{
+            transplant(t,y,y->right);
+            y->left = z->left;
+            y->left->parent = y;
+        }
+        transplant(t,z,y);
+        y->left = z->left;
+        y->left->parent = y;
+        y->color = z->color;
+    }
+    if(y_origin_color == 0)
+    {
+        delete_fixup(t,x);
+    }
+}
+void inorder(rbtree *t, node *n) {
+if(n != t->NIL) {
+  inorder(t, n->left);
+  printf("%d\n", n->data);
+  inorder(t, n->right);
+}
+}
+int main() {
+rbtree *t = new_rbtree();
 
+node *a, *b, *c, *d, *e, *f, *g, *h, *i, *j, *k, *l, *m;
+a = new_node(10);
+b = new_node(20);
+c = new_node(30);
+d = new_node(100);
+e = new_node(90);
+f = new_node(40);
+g = new_node(50);
+h = new_node(60);
+i = new_node(70);
+j = new_node(80);
+k = new_node(150);
+l = new_node(110);
+m = new_node(120);
 
+insert(t, a);
+insert(t, b);
+insert(t, c);
+insert(t, d);
+insert(t, e);
+insert(t, f);
+insert(t, g);
+insert(t, h);
+insert(t, i);
+insert(t, j);
+insert(t, k);
+insert(t, l);
+insert(t, m);
 
+delete(t, a);
+delete(t, m);
+
+inorder(t, t->root);
+
+return 0;
+}
